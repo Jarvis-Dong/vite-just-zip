@@ -1,0 +1,9 @@
+.DS_Store
+node_modules
+src
+examples
+tsconfig.json
+.gitignore
+*.log
+.idea
+.vscode 
