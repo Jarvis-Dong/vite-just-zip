@@ -27,6 +27,12 @@ interface ViteJustZipOptions {
    * @default true in production, false otherwise
    */
   enabled?: boolean;
+
+  /**
+   * The inner path to zip
+   * @default undefined
+   */
+  innerPath?: string;
 }
 
 function getNextIndex(baseDir: string, appCode: string, dateStr: string): number {
@@ -47,7 +53,7 @@ function getNextIndex(baseDir: string, appCode: string, dateStr: string): number
   return maxIndex + 1;
 }
 
-function zipOutputFolder(outDir: string, zipPath: string, appCode: string): Promise<string> {
+function zipOutputFolder(outDir: string, zipPath: string, appCode: string, innerPath?: string): Promise<string> {
   const outputPath = path.resolve(outDir);
   // Generate date string in YYYYMMDD format
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -68,7 +74,8 @@ function zipOutputFolder(outDir: string, zipPath: string, appCode: string): Prom
 
     archive.pipe(output);
     // Maintain the original directory structure
-    archive.directory(outputPath, path.basename(outDir));
+    const destPath = innerPath || outDir;  // 默认使用完整的 outDir
+    archive.directory(outputPath, destPath);
     archive.finalize();
   });
 }
@@ -78,7 +85,8 @@ export default function viteJustZip(options: ViteJustZipOptions = {}): Plugin {
     outDir = 'dist',
     zipPath,
     appCode = 'app',
-    enabled
+    enabled,
+    innerPath
   } = options;
 
   return {
@@ -97,7 +105,7 @@ export default function viteJustZip(options: ViteJustZipOptions = {}): Plugin {
         const finalZipPath = zipPath || process.env.VITE_ZIP_PATH || finalOutDir;
         const finalAppCode = process.env.VITE_APP_CODE || appCode;
         
-        const zipFilePath = await zipOutputFolder(finalOutDir, finalZipPath, finalAppCode);
+        const zipFilePath = await zipOutputFolder(finalOutDir, finalZipPath, finalAppCode, innerPath);
         console.log(`Successfully packaged and compressed: ${zipFilePath}`);
       } catch (err) {
         console.error('Error compressing folder:', err);
